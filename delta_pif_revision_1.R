@@ -256,7 +256,9 @@ df_sens_plot <- df_sens |>
 df_labels <- df_sens_plot |>
   group_by(coverage) |>
   filter(hr == min(hr)) |>
-  ungroup()
+  ungroup() |>
+  mutate(year = paste0(year - 10, "-", year)) |>
+  mutate(year = if_else(year == "2020-2030", "2025-2030", year))
 
 df_labels_100 <- df_only_100 |>
   filter(hr == min(hr))
@@ -280,9 +282,8 @@ plt_pif_sens <- ggplot(df_sens_plot) +
   labs(
     x = "HR",
     y = "PIF",
-    title = "Sensitivity analysis",
-    subtitle = "Potential Impact Fraction (PIF) for Shingle Vaccination as a function of Hazard Ratio (HR) values",
-    caption = paste0("_Vaccine coverage per year:_ ", paste0("**", df$year,"**: ", df$coverage,"%", collapse = "; "), "; **Ideal**: 100%")
+    title = "Potential Impact Fraction (PIF) for Shingle Vaccination as a function of Hazard Ratio (HR) values",
+    caption = paste0("_Vaccine coverage per period:_ ", paste0("**", df_labels$year,"**: ", df$coverage,"%", collapse = "; "), "; **Ideal**: 100%")
   ) +
   scale_y_continuous(labels = scales::percent_format(), n.breaks = 10) +
   scale_x_continuous(limits = c(0, 1), n.breaks = 10) +
@@ -293,7 +294,7 @@ plt_pif_sens <- ggplot(df_sens_plot) +
   ) +
   scale_color_manual("Coverage (%):", values = MetBrewer::met.brewer("Hokusai3", n = 5)) +
   scale_fill_manual("Coverage (%):", values = MetBrewer::met.brewer("Hokusai3", n = 5))
-ggsave("Sensitivity_analysis_1.pdf", plot = plt_pif_sens, width = 8, height = 4)
+ggsave("Figure_1.pdf", plot = plt_pif_sens, width = 8, height = 4)
 
 #Create a figure of the cases and averted cases
 df_plot <- df |>
@@ -308,7 +309,7 @@ df_plot <- df |>
   mutate(estimate = case_when(
     str_detect(Estimate, "wu") ~ "Wu et al",
     str_detect(Estimate, "yin") ~ "Yin et al",
-    .default = "Incidencent cases"
+    .default = "Incident cases"
   ))
 
 df_plot <- df_plot |>
@@ -321,16 +322,16 @@ df_plot <- df_plot |>
   mutate(pct = value / Total)
 
 plt_pif_cases <- ggplot(df_plot) +
-  geom_text(aes(x = decade, y = value, color = estimate,
+  geom_text(aes(x = as.character(year), y = value, color = estimate,
                 label = scales::percent(pct)), position = position_dodge(width = 0.9),
             vjust = 0, size = 3) +
-  geom_col(aes(x = decade, y = value, fill = estimate), position = position_dodge(width = 0.9)) +
+  geom_col(aes(x = as.character(year), y = value, fill = estimate), position = position_dodge(width = 0.9)) +
   labs(
     x = "Decade",
     y = "Incident AD cases",
     title = "Averted Alzheimer's Disease (AD) cases attributable to increased\nshingles vaccination in the United States by decade",
     subtitle = "All values represent incident values for each decade.",
-    caption = paste0("_Vaccine coverage per decade:_ ", paste0("**", df$year,"**: ", df$coverage,"%", collapse = "; "))
+    caption = paste0("_Vaccine coverage per period (endpoints):_ ", paste0("**", df$year,"**: ", df$coverage,"%", collapse = "; "))
   ) +
   theme_classic() +
   theme(
@@ -340,4 +341,4 @@ plt_pif_cases <- ggplot(df_plot) +
   scale_y_continuous(labels = scales::comma_format(), n.breaks = 10) +
   scale_color_manual("Estimate (%):", values = MetBrewer::met.brewer("Hokusai3", n = 3)) +
   scale_fill_manual("Estimate (%):", values = MetBrewer::met.brewer("Hokusai3", n = 3))
-ggsave("Averted_cases.pdf", plot = plt_pif_cases, width = 8, height = 4)
+ggsave("Supplementary_Figure_1.pdf", plot = plt_pif_cases, width = 8, height = 4)
